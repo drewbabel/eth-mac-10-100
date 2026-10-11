@@ -7,16 +7,19 @@ RTL := $(wildcard rtl/*.sv)
 TB  := $(firstword $(wildcard tb/$(MOD)_tb.sv))
 SIM := build/sim
 WAVE_STATE := tb/$(MOD).ron
+REF := $(wildcard tb/$(MOD)_ref.py)
 
 run:
 	@test -n "$(MOD)" || { echo "usage: make MOD=<module>"; exit 1; }
 	@mkdir -p build
+	$(if $(REF),python3 $(REF))
 	iverilog -g2012 -s $(MOD)_tb -o $(SIM) $(RTL) $(TB)
 	vvp $(SIM)
 
 wave:
 	@test -n "$(MOD)" || { echo "usage: make wave MOD=<module>"; exit 1; }
 	@mkdir -p build
+	$(if $(REF),python3 $(REF))
 	iverilog -g2012 -s $(MOD)_tb -o $(SIM) $(RTL) $(TB)
 	-vvp $(SIM)
 	surfer $$(ls *.vcd 2>/dev/null | head -1) $$(test -f $(WAVE_STATE) && echo "-s $(WAVE_STATE)") &
