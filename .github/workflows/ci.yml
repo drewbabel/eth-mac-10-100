@@ -1,0 +1,39 @@
+name: CI
+
+env:
+  OSS_CAD_SUITE: '2026-07-24'
+
+on:
+  push:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testbenches:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/oss-cad-suite
+        with:
+          version: ${{ env.OSS_CAD_SUITE }}
+      - name: Run every testbench
+        run: |
+          shopt -s nullglob
+          for tb in tb/*_tb.sv; do
+            mod=$(basename "$tb" _tb.sv)
+            echo "== $mod =="
+            make MOD="$mod"
+          done
+
+  ci-gate:
+    if: always()
+    needs: [testbenches]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all CI jobs succeeded
+        if: ${{ needs.testbenches.result != 'success' }}
+        run: |
+          echo "One or more required CI jobs did not succeed."
+          exit 1
