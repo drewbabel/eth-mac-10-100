@@ -173,4 +173,60 @@ module rmii_tx #(
   assign last_pair = (pair_cnt == LastPair);
   assign min_len_reached = (byte_cnt == $bits(byte_cnt)'(PAD_TO_BYTES - 1));
 
+`ifdef FORMAL
+  localparam int GapTicks = GAP_BYTES * PairsPerByte;
+
+  logic f_past_valid = 1'b0;
+  logic f_tick_q = 1'b0;
+  logic f_after_reset = 1'b1;
+  logic [15:0] f_low = '0;
+  logic [15:0] f_ticks = '0;
+
+  initial assume (!rst_n);
+
+  always @(posedge clk) begin
+    f_past_valid <= 1'b1;
+    f_tick_q <= tick;
+
+    if (!rst_n) begin
+      f_low <= '0;
+      f_after_reset <= 1'b1;
+    end else begin
+      if (f_tick_q && phy_tx_en) f_low <= '0;
+      else if (f_tick_q && f_low != 16'hFFFF) f_low <= f_low + 1'b1;
+      if (phy_tx_en) f_after_reset <= 1'b0;
+    end
+
+    if (!rst_n) f_ticks <= '0;
+    else if (tick) f_ticks <= (next_state != state) ? '0 : f_ticks + 1'b1;
+  end
+
+  always @(posedge clk) begin
+    if (f_past_valid) begin
+      assert (phy_tx_en || phy_txd == 2'b00);
+
+      case (state)
+        PREAMBLE: assert (f_ticks < 16'(PREAMBLE_BYTES * PairsPerByte));
+        START: assert (f_ticks < 16'(PairsPerByte));
+        PAD: assert (f_ticks < 16'(PAD_TO_BYTES * PairsPerByte));
+        CRC: assert (f_ticks < 16'(CrcBytes * PairsPerByte));
+        GAP: assert (f_ticks < 16'(GapTicks));
+        default: ;
+      endcase
+    end
+
+    if (f_past_valid && $past(rst_n)) begin
+      if (!$past(tick)) assert (phy_tx_en == $past(phy_tx_en) && phy_txd == $past(phy_txd));
+      if ($fell(phy_tx_en)) assert ($past(state) == GAP);
+      if ($rose(phy_tx_en) && !f_after_reset) assert (f_low >= 16'(GapTicks));
+    end
+
+    if (f_past_valid && $past(rst_n) && rst_n) begin
+      cover ($fell(phy_tx_en) && underrun);
+      cover ($fell(phy_tx_en) && !underrun);
+      cover ($rose(phy_tx_en) && !f_after_reset && f_low == 16'(GapTicks + 1));
+    end
+  end
+`endif
+
 endmodule
