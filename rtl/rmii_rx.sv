@@ -147,4 +147,42 @@ module rmii_rx #(
     end
   end
 
+`ifdef FORMAL
+  logic f_past_valid = 1'b0;
+  logic f_open = 1'b0;
+  logic f_closed = 1'b0;
+
+  initial assume (!rst_n);
+
+  always @(posedge clk) begin
+    f_past_valid <= 1'b1;
+
+    if (!rst_n) begin
+      f_open   <= 1'b0;
+      f_closed <= 1'b0;
+    end else if (rx_valid) begin
+      f_open   <= !rx_last;
+      f_closed <= rx_last;
+    end
+  end
+
+  always @(posedge clk) begin
+    if (f_past_valid && rst_n) begin
+      assert (rx_valid || !(rx_last || rx_bad));
+      assert (rx_last || !rx_bad);
+    end
+
+    if (f_past_valid && $past(rst_n) && rst_n && !$past(tick)) begin
+      assert (!rx_valid);
+      assert (rx_data == $past(rx_data));
+    end
+
+    if (f_past_valid && $past(rst_n) && rst_n) begin
+      cover (rx_last && !rx_bad);
+      cover (rx_last && rx_bad);
+      cover (rx_valid && !f_open && f_closed);
+    end
+  end
+`endif
+
 endmodule

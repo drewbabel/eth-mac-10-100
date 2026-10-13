@@ -1,0 +1,30 @@
+[tasks]
+prove
+prove_small
+cover_small
+
+[options]
+prove: mode prove
+prove_small: mode prove
+cover_small: mode cover
+cover_small: depth 120
+
+[engines]
+prove: smtbmc z3
+prove: abc pdr
+prove_small: smtbmc z3
+prove_small: abc pdr
+cover_small: smtbmc yices
+
+[script]
+read -sv crc.sv
+read -sv synchronizer.sv
+read -formal rmii_rx.sv
+prove_small: chparam -set MIN_FRAME_BYTES 5 -set MAX_FRAME_BYTES 6 -set MAX_TAGGED_FRAME_BYTES 7 rmii_rx
+cover_small: chparam -set MIN_FRAME_BYTES 5 -set MAX_FRAME_BYTES 6 -set MAX_TAGGED_FRAME_BYTES 7 rmii_rx
+prep -top rmii_rx
+
+[files]
+rtl/crc.sv
+rtl/synchronizer.sv
+rtl/rmii_rx.sv
