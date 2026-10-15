@@ -1,3 +1,5 @@
+`default_nettype none
+
 module rmii_rx #(
     parameter int MIN_FRAME_BYTES = 64,
     parameter int MAX_FRAME_BYTES = 1518,
@@ -52,8 +54,9 @@ module rmii_rx #(
       .WIDTH($bits({phy_crs_dv, phy_rxd}))
   ) u_sync (
       .clk(clk),
-      .d  ({phy_crs_dv, phy_rxd}),
-      .q  ({crs_dv, rxd})
+      .rst_n(rst_n),
+      .d({phy_crs_dv, phy_rxd}),
+      .q({crs_dv, rxd})
   );
 
   crc #(
@@ -186,3 +189,5 @@ module rmii_rx #(
 `endif
 
 endmodule
+
+`default_nettype wire
