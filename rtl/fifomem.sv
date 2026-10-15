@@ -4,6 +4,10 @@ module fifomem #(
     parameter int WIDTH = 8,
     parameter int DEPTH = 16
 ) (
+`ifdef FORMAL
+    output logic [DEPTH-1:0][WIDTH-1:0] mem_q,
+`endif
+
     input logic                     wr_clk,
     input logic                     wr_en,
     input logic                     full,
@@ -18,6 +22,12 @@ module fifomem #(
 );
 
   logic [WIDTH-1:0] mem[DEPTH];
+
+`ifdef FORMAL
+  for (genvar i = 0; i < DEPTH; i++) begin : g_mem_q
+    assign mem_q[i] = mem[i];
+  end
+`endif
 
   always_ff @(posedge wr_clk) begin
     if (wr_en && !full) begin
