@@ -1,3 +1,5 @@
+`default_nettype none
+
 module rmii_tx #(
     parameter int PREAMBLE_BYTES = 7,
     parameter int PAD_TO_BYTES = 60,
@@ -230,3 +232,5 @@ module rmii_tx #(
 `endif
 
 endmodule
+
+`default_nettype wire

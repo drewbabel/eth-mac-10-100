@@ -1,3 +1,5 @@
+`default_nettype none
+
 module tick_gen #(
     parameter int DIVISOR = 4
 ) (
@@ -18,3 +20,5 @@ module tick_gen #(
   assign tick = (cnt == $bits(cnt)'(DIVISOR - 1));
 
 endmodule
+
+`default_nettype wire
