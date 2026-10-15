@@ -1,4 +1,5 @@
 #   make MOD=<module>           		compile rtl/ + that tb, run (test FAIL exits nonzero)
+#   make MOD=<module> MAX_ERRORS=<n>	stop after n mismatches
 #   make wave MOD=<module>        		same, then open the waveform in surfer (opens even on FAIL)
 #   make view MOD=<module>         		open testbench waveform in surfer (error if .vcd missing)
 #   make formal MOD=<module>  		    run every SymbiYosys task in formal/$(MOD).sby (FAIL exits nonzero)
@@ -18,14 +19,14 @@ run:
 	@mkdir -p build
 	$(if $(REF),python3 $(REF))
 	iverilog -g2012 -s $(MOD)_tb -o $(SIM) $(RTL) $(TB)
-	vvp $(SIM)
+	vvp $(SIM) $(if $(MAX_ERRORS),+max_errors=$(MAX_ERRORS))
 
 wave:
 	@test -n "$(MOD)" || { echo "usage: make wave MOD=<module>"; exit 1; }
 	@mkdir -p build
 	$(if $(REF),python3 $(REF))
 	iverilog -g2012 -s $(MOD)_tb -o $(SIM) $(RTL) $(TB)
-	-vvp $(SIM)
+	-vvp $(SIM) $(if $(MAX_ERRORS),+max_errors=$(MAX_ERRORS))
 	surfer $$(ls *.vcd 2>/dev/null | head -1) $$(test -f $(WAVE_STATE) && echo "-s $(WAVE_STATE)") &
 
 view:

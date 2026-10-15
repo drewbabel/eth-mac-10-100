@@ -1,6 +1,7 @@
 module synchronizer_tb ();
 
   int   errors = 0;
+  int   max_errors = 0;
   int   checks = 0;
 
   logic clk = 0;
@@ -25,6 +26,13 @@ module synchronizer_tb ();
       $error("t=%0t %s mismatch: got=%b  exp=%b", $time, name, got, exp);
     end
   endtask  // Automatic
+
+  initial begin
+    if ($value$plusargs("max_errors=%d", max_errors) && max_errors > 0) begin
+      wait (errors >= max_errors);
+      $fatal(1, "TB STOPPED: %0d mismatches", errors);
+    end
+  end
 
   task automatic verdict();
     if (errors == 0) begin

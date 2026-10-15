@@ -2,6 +2,7 @@ module crc_tb ();
 
   int checks = 0;
   int errors = 0;
+  int max_errors = 0;
 
   localparam int Width = 32;
   localparam int DinW = 2;
@@ -95,6 +96,13 @@ module crc_tb ();
     en = 1'b0;
     check("residue", crc_out, Residue);
   endtask  // Automatic
+
+  initial begin
+    if ($value$plusargs("max_errors=%d", max_errors) && max_errors > 0) begin
+      wait (errors >= max_errors);
+      $fatal(1, "TB STOPPED: %0d mismatches", errors);
+    end
+  end
 
   initial begin
     $dumpfile("tb.vcd");

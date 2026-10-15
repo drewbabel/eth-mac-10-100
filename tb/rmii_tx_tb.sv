@@ -14,6 +14,7 @@ module rmii_tx_tb ();
 
   int checks;
   int errors;
+  int max_errors;
 
   rmii_tx_bench #(
       .PREAMBLE_BYTES(PreambleBytes),
@@ -61,6 +62,13 @@ module rmii_tx_tb ();
     repeat (TimeoutClks) @(posedge std_bench.clk);
     $fatal(1, "TB TIMEOUT: %0d and %0d of %0d frames out", std_bench.mon_frame,
            alt_bench.mon_frame, NumFrames);
+  end
+
+  initial begin
+    if ($value$plusargs("max_errors=%d", max_errors) && max_errors > 0) begin
+      wait (std_bench.errors + alt_bench.errors >= max_errors);
+      $fatal(1, "TB STOPPED: %0d mismatches", std_bench.errors + alt_bench.errors);
+    end
   end
 
 endmodule

@@ -8,6 +8,7 @@ module rmii_line_tb ();
 
   int checks;
   int errors;
+  int max_errors;
 
   rmii_line_bench #(
       .LOOPBACK  (1'b1),
@@ -49,6 +50,13 @@ module rmii_line_tb ();
     repeat (TimeoutClks) @(posedge loop_bench.clk);
     $fatal(1, "TB TIMEOUT: %0d and %0d of %0d outputs", loop_bench.mon_out, wire_bench.mon_out,
            NumOut);
+  end
+
+  initial begin
+    if ($value$plusargs("max_errors=%d", max_errors) && max_errors > 0) begin
+      wait (loop_bench.errors + wire_bench.errors >= max_errors);
+      $fatal(1, "TB STOPPED: %0d mismatches", loop_bench.errors + wire_bench.errors);
+    end
   end
 
 endmodule

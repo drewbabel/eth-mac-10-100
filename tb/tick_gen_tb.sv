@@ -3,6 +3,7 @@ module tick_gen_tb ();
   localparam int DIVISOR = 4;
 
   int   errors = 0;
+  int   max_errors = 0;
   int   checks = 0;
 
   logic clk = 0;
@@ -54,6 +55,13 @@ module tick_gen_tb ();
     @(posedge clk);
     #1 clr = 1'b0;
   endtask  // Automatic
+
+  initial begin
+    if ($value$plusargs("max_errors=%d", max_errors) && max_errors > 0) begin
+      wait (errors >= max_errors);
+      $fatal(1, "TB STOPPED: %0d mismatches", errors);
+    end
+  end
 
   initial begin
     $dumpfile("tb.vcd");
