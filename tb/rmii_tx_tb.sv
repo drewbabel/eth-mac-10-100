@@ -1,3 +1,5 @@
+`default_nettype none
+
 module rmii_tx_tb ();
 
   localparam int PreambleBytes = 7;
@@ -235,3 +237,5 @@ module rmii_tx_bench #(
   end
 
 endmodule
+
+`default_nettype wire

@@ -1,3 +1,5 @@
+`default_nettype none
+
 module rmii_rx_tb ();
 
   localparam int MinFrameBytes = 64;
@@ -195,3 +197,5 @@ module rmii_rx_bench #(
   end
 
 endmodule
+
+`default_nettype wire
