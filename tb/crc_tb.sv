@@ -1,3 +1,5 @@
+`default_nettype none
+
 module crc_tb ();
 
   int checks = 0;
@@ -129,3 +131,5 @@ module crc_tb ();
   end
 
 endmodule
+
+`default_nettype wire

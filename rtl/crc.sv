@@ -1,3 +1,5 @@
+`default_nettype none
+
 module crc #(
     parameter int WIDTH = 32,
     parameter int DIN_W = 2,
@@ -30,3 +32,5 @@ module crc #(
   end
 
 endmodule
+
+`default_nettype wire

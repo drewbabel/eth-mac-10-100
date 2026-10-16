@@ -1,3 +1,5 @@
+`default_nettype none
+
 module rmii_line_tb ();
 
   localparam int NumFrames = 46;
@@ -220,3 +222,5 @@ module rmii_line_bench #(
   end
 
 endmodule
+
+`default_nettype wire

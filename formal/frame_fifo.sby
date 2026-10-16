@@ -1,0 +1,27 @@
+[tasks]
+prove
+cover
+
+[options]
+prove: mode prove
+cover: mode cover
+cover: depth 40
+multiclock on
+
+[engines]
+prove: smtbmc z3
+prove: abc pdr
+cover: smtbmc yices
+
+[script]
+read -formal synchronizer.sv
+read -formal fifomem.sv
+read -formal frame_fifo.sv
+chparam -set WIDTH 1 -set DEPTH 4 frame_fifo
+prep -top frame_fifo
+memory_map
+
+[files]
+rtl/synchronizer.sv
+rtl/fifomem.sv
+rtl/frame_fifo.sv

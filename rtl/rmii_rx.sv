@@ -1,8 +1,24 @@
+`default_nettype none
+
 module rmii_rx #(
     parameter int MIN_FRAME_BYTES = 64,
     parameter int MAX_FRAME_BYTES = 1518,
     parameter int MAX_TAGGED_FRAME_BYTES = 1522
 ) (
+`ifdef FORMAL
+    output logic f_in_frame,
+    output logic [1:0] f_pair_cnt,
+    output logic [7:0] f_byte_cnt,
+    output logic [7:0] f_new_byte,
+    output logic [39:0] f_held_bytes,
+    output logic [2:0] f_mid,
+    output logic f_crs_dv,
+    output logic [1:0] f_rxd,
+    output logic f_crs_dv_last,
+    output logic [1:0] f_rxd_last,
+    output logic [31:0] f_crc_out,
+    output logic f_has_tag,
+`endif
     input wire clk,
     input wire rst_n,
     input wire tick,
@@ -51,9 +67,13 @@ module rmii_rx #(
   synchronizer #(
       .WIDTH($bits({phy_crs_dv, phy_rxd}))
   ) u_sync (
+`ifdef FORMAL
+      .mid(f_mid),
+`endif
       .clk(clk),
-      .d  ({phy_crs_dv, phy_rxd}),
-      .q  ({crs_dv, rxd})
+      .rst_n(rst_n),
+      .d({phy_crs_dv, phy_rxd}),
+      .q({crs_dv, rxd})
   );
 
   crc #(
@@ -148,6 +168,18 @@ module rmii_rx #(
   end
 
 `ifdef FORMAL
+  assign f_in_frame = in_frame;
+  assign f_pair_cnt = pair_cnt;
+  assign f_byte_cnt = 8'(byte_cnt);
+  assign f_new_byte = new_byte;
+  assign f_held_bytes = held_bytes;
+  assign f_crs_dv = crs_dv;
+  assign f_rxd = rxd;
+  assign f_crs_dv_last = crs_dv_last;
+  assign f_rxd_last = rxd_last;
+  assign f_crc_out = crc_out;
+  assign f_has_tag = has_tag;
+
   logic f_past_valid = 1'b0;
   logic f_open = 1'b0;
   logic f_closed = 1'b0;
@@ -186,3 +218,5 @@ module rmii_rx #(
 `endif
 
 endmodule
+
+`default_nettype wire

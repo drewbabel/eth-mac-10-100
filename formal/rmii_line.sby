@@ -1,19 +1,48 @@
 [tasks]
 cover_small
+cover_small_10
+prove_small_100
+prove_small_10
 
 [options]
 cover_small: mode cover
 cover_small: depth 200
+cover_small_10: mode cover
+cover_small_10: depth 1000
+prove_small_100: mode prove
+prove_small_100: depth 24
+prove_small_10: mode prove
+prove_small_10: depth 24
+timeout 900
 
 [engines]
 cover_small: smtbmc yices
+cover_small_10: smtbmc bitwuzla
+prove_small_100: smtbmc yices
+prove_small_10: smtbmc yices
 
 [script]
+prove_small_10: read -define LINE_SPEED_10
+cover_small_10: read -define LINE_SPEED_10
+cover_small: read -define RMII_LINE_COVER
+cover_small_10: read -define RMII_LINE_COVER
 read -sv crc.sv
-read -sv synchronizer.sv
-read -sv tick_gen.sv
-read -sv rmii_tx.sv
-read -sv rmii_rx.sv
+cover_small: read -sv synchronizer.sv
+cover_small_10: read -sv synchronizer.sv
+cover_small: read -sv tick_gen.sv
+cover_small_10: read -sv tick_gen.sv
+cover_small: read -sv rmii_tx.sv
+cover_small_10: read -sv rmii_tx.sv
+cover_small: read -sv rmii_rx.sv
+cover_small_10: read -sv rmii_rx.sv
+prove_small_100: read -formal synchronizer.sv
+prove_small_10: read -formal synchronizer.sv
+prove_small_100: read -formal tick_gen.sv
+prove_small_10: read -formal tick_gen.sv
+prove_small_100: read -formal rmii_tx.sv
+prove_small_10: read -formal rmii_tx.sv
+prove_small_100: read -formal rmii_rx.sv
+prove_small_10: read -formal rmii_rx.sv
 read -formal rmii_line.sv
 chparam -set PREAMBLE_BYTES 2 -set PAD_TO_BYTES 3 -set GAP_BYTES 2 -set MIN_FRAME_BYTES 7 -set MAX_FRAME_BYTES 8 -set MAX_TAGGED_FRAME_BYTES 9 rmii_line
 prep -top rmii_line
