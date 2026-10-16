@@ -5,6 +5,19 @@ module rmii_tx #(
     parameter int PAD_TO_BYTES = 60,
     parameter int GAP_BYTES = 12
 ) (
+`ifdef FORMAL
+    output logic [2:0] f_state,
+    output logic [1:0] f_pair_cnt,
+    output logic [7:0] f_byte_cnt,
+    output logic [7:0] f_data_byte,
+    output logic f_data_last,
+    output logic f_underrun,
+    output logic [31:0] f_crc_out,
+    output logic [15:0] f_low_cnt,
+    output logic f_tick_seen,
+    output logic f_no_frame,
+    output logic [15:0] f_state_ticks,
+`endif
     input wire clk,
     input wire rst_n,
     input wire tick,
@@ -176,6 +189,14 @@ module rmii_tx #(
   assign min_len_reached = (byte_cnt == $bits(byte_cnt)'(PAD_TO_BYTES - 1));
 
 `ifdef FORMAL
+  assign f_state = state;
+  assign f_pair_cnt = pair_cnt;
+  assign f_byte_cnt = 8'(byte_cnt);
+  assign f_data_byte = data_byte;
+  assign f_data_last = data_last;
+  assign f_underrun = underrun;
+  assign f_crc_out = crc_out;
+
   localparam int GapTicks = GAP_BYTES * PairsPerByte;
 
   logic f_past_valid = 1'b0;
@@ -183,6 +204,11 @@ module rmii_tx #(
   logic f_after_reset = 1'b1;
   logic [15:0] f_low = '0;
   logic [15:0] f_ticks = '0;
+
+  assign f_low_cnt = f_low;
+  assign f_tick_seen = f_tick_q;
+  assign f_no_frame = f_after_reset;
+  assign f_state_ticks = f_ticks;
 
   initial assume (!rst_n);
 
