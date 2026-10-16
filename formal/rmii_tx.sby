@@ -1,0 +1,28 @@
+[tasks]
+prove
+prove_small
+cover_small
+
+[options]
+prove: mode prove
+prove_small: mode prove
+cover_small: mode cover
+cover_small: depth 120
+
+[engines]
+prove: smtbmc z3
+prove: abc pdr
+prove_small: smtbmc z3
+prove_small: abc pdr
+cover_small: smtbmc yices
+
+[script]
+read -sv crc.sv
+read -formal rmii_tx.sv
+prove_small: chparam -set PREAMBLE_BYTES 2 -set PAD_TO_BYTES 3 -set GAP_BYTES 2 rmii_tx
+cover_small: chparam -set PREAMBLE_BYTES 2 -set PAD_TO_BYTES 3 -set GAP_BYTES 2 rmii_tx
+prep -top rmii_tx
+
+[files]
+rtl/crc.sv
+rtl/rmii_tx.sv

@@ -27,13 +27,66 @@ jobs:
             make MOD="$mod"
           done
 
+  formal-list:
+    runs-on: ubuntu-latest
+    outputs:
+      groups: ${{ steps.list.outputs.groups }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Split formal tasks into groups
+        id: list
+        run: |
+          groups=$(python3 - <<'PY'
+          import glob, json, os, re
+          items = []
+          for f in sorted(glob.glob('formal/*.sby')):
+              mod = os.path.basename(f)[:-4]
+              block = re.search(r'^\[tasks\]\s*\n(.*?)(?=^\[|\Z)', open(f).read(), re.S | re.M)
+              tasks = [l.split()[0] for l in block.group(1).splitlines()
+                       if l.strip() and not l.lstrip().startswith('#')] if block else ['']
+              items += ['%s:%s' % (mod, t) for t in tasks]
+          n = min(len(items), 16)
+          g = [[] for _ in range(n)]
+          for i, x in enumerate(items):
+              g[i % n].append(x)
+          print(json.dumps([' '.join(x) for x in g if x]))
+          PY
+          )
+          echo "$groups"
+          echo "groups=$groups" >> "$GITHUB_OUTPUT"
+
+  formal:
+    needs: formal-list
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        group: ${{ fromJSON(needs.formal-list.outputs.groups) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/oss-cad-suite
+        with:
+          version: ${{ env.OSS_CAD_SUITE }}
+      - name: Prove the group
+        run: |
+          for item in ${{ matrix.group }}; do
+            mod=${item%%:*}
+            task=${item#*:}
+            echo "== $mod $task =="
+            if [ -n "$task" ]; then
+              sby -f "formal/$mod.sby" "$task"
+            else
+              sby -f "formal/$mod.sby"
+            fi
+          done
+
   ci-gate:
     if: always()
-    needs: [testbenches]
+    needs: [testbenches, formal-list, formal]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all CI jobs succeeded
-        if: ${{ needs.testbenches.result != 'success' }}
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
         run: |
           echo "One or more required CI jobs did not succeed."
           exit 1
