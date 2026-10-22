@@ -1,0 +1,20 @@
+[tasks]
+prove
+cover
+
+[options]
+prove: mode prove
+cover: mode cover
+cover: depth 10
+
+[engines]
+prove: smtbmc z3
+prove: abc pdr
+cover: smtbmc yices
+
+[script]
+read -formal eth_mac_regs.sv
+prep -top eth_mac_regs
+
+[files]
+rtl/eth_mac_regs.sv
