@@ -8,9 +8,14 @@ module eth_mac #(
     input wire hclk,
     input wire hrst_n,
 
-    // Convert to registers
-    input wire speed_100,
-    input wire loopback,
+    input wire wen,
+    input wire ren,
+    input wire [31:0] addr,
+    input wire [31:0] wdata,
+    input wire [3:0] strobe,
+    output logic [31:0] rdata,
+    output logic error,
+    output logic request_stall,
 
     input wire tx_valid,
     output logic tx_ready,
@@ -43,6 +48,35 @@ module eth_mac #(
 
   logic rx_empty;
   logic rx_rd_en;
+
+  logic reg_speed_100;
+  logic reg_loopback;
+  logic speed_100;
+  logic loopback;
+
+  eth_mac_regs u_regs (
+      .hclk(hclk),
+      .hrst_n(hrst_n),
+      .wen(wen),
+      .ren(ren),
+      .addr(addr),
+      .wdata(wdata),
+      .strobe(strobe),
+      .rdata(rdata),
+      .error(error),
+      .request_stall(request_stall),
+      .speed_100(reg_speed_100),
+      .loopback(reg_loopback)
+  );
+
+  synchronizer #(
+      .WIDTH(2)
+  ) u_ctrl_sync (
+      .clk(clk),
+      .rst_n(rst_n),
+      .d({reg_loopback, reg_speed_100}),
+      .q({loopback, speed_100})
+  );
 
   // Bus to line
   frame_fifo #(

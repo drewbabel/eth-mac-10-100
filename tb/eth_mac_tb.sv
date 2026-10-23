@@ -85,6 +85,14 @@ module eth_mac_bench #(
   logic rst_n;
   logic hrst_n;
   logic speed_100;
+  logic wen;
+  logic ren;
+  logic [31:0] addr;
+  logic [31:0] wdata;
+  logic [3:0] strobe;
+  logic [31:0] rdata;
+  logic error;
+  logic request_stall;
   logic tx_valid;
   logic tx_ready;
   logic [7:0] tx_data;
@@ -124,8 +132,14 @@ module eth_mac_bench #(
       .rst_n(rst_n),
       .hclk(hclk),
       .hrst_n(hrst_n),
-      .speed_100(speed_100),
-      .loopback(LOOPBACK),
+      .wen(wen),
+      .ren(ren),
+      .addr(addr),
+      .wdata(wdata),
+      .strobe(strobe),
+      .rdata(rdata),
+      .error(error),
+      .request_stall(request_stall),
       .tx_valid(tx_valid),
       .tx_ready(tx_ready),
       .tx_data(tx_data),
@@ -149,6 +163,11 @@ module eth_mac_bench #(
     rst_n = 1'b0;
     hrst_n = 1'b0;
     speed_100 = 1'b1;
+    wen = 1'b0;
+    ren = 1'b0;
+    addr = '0;
+    wdata = '0;
+    strobe = '0;
     tx_valid = 1'b0;
     tx_data = '0;
     tx_last = 1'b0;
@@ -156,6 +175,22 @@ module eth_mac_bench #(
     repeat (5) @(posedge hclk);
     #1 rst_n = 1'b1;
     hrst_n = 1'b1;
+  endtask  // Automatic
+
+  task automatic write_ctrl();
+    @(posedge hclk);
+    #1 wen = 1'b1;
+    addr   = '0;
+    wdata  = 32'({LOOPBACK, speed_100});
+    strobe = 4'hF;
+    @(posedge hclk);
+    #1 wen = 1'b0;
+    ren = 1'b1;
+    #1 check("ctrl readback", rdata, 32'({LOOPBACK, speed_100}));
+    check("no stall", 32'({error, request_stall}), 32'(0));
+    @(posedge hclk);
+    #1 ren = 1'b0;
+    repeat (4) @(posedge clk);
   endtask  // Automatic
 
   task automatic check(input string name, input logic [31:0] got, input logic [31:0] exp);
@@ -174,7 +209,8 @@ module eth_mac_bench #(
       wait (pin_frame == f);
       repeat (SettleClks) @(posedge clk);
       div = frame_div;
-      #1 speed_100 = (div == 1);
+      speed_100 = (div == 1);
+      write_ctrl();
     end
     repeat (int'(frame_mem[f][47:32])) @(posedge hclk);
     for (int i = 0; i < len; i++) begin
@@ -204,6 +240,7 @@ module eth_mac_bench #(
       byte_offset[f] = byte_offset[f-1] + int'(frame_mem[f-1][31:16]);
     end
     do_reset();
+    write_ctrl();
 
     for (int f = 0; f < NUM_FRAMES; f++) send_frame(f);
 
